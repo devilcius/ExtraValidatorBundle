@@ -7,7 +7,7 @@ Current validators:
 
 CCC
 ---------
-Código Cuenta Cliente
+CÃ³digo Cuenta Cliente
 
 
 
