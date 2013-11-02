@@ -1,14 +1,13 @@
 <?php
 
-
 namespace devilcius\ExtraValidatorBundle\Tests\Validator\Constraints;
 
 use devilcius\ExtraValidatorBundle\Validator\Constraints\Ccc;
 use devilcius\ExtraValidatorBundle\Validator\Constraints\CccValidator;
 
-
 class CccValidatorTest extends \PHPUnit_Framework_TestCase
 {
+
     protected $context;
     protected $validator;
 
@@ -28,17 +27,17 @@ class CccValidatorTest extends \PHPUnit_Framework_TestCase
     public function testNullIsValid()
     {
         $this->context->expects($this->never())
-            ->method('addViolation');
+                ->method('addViolation');
 
-        $this->validator->validate(null);
+        $this->validator->validate(null, new Ccc());
     }
 
     public function testEmptyStringIsValid()
     {
         $this->context->expects($this->never())
-            ->method('addViolation');
+                ->method('addViolation');
 
-        $this->validator->validate('');
+        $this->validator->validate('', new Ccc());
     }
 
     /**
@@ -46,38 +45,58 @@ class CccValidatorTest extends \PHPUnit_Framework_TestCase
      */
     public function testExpectsStringCompatibleType()
     {
-        $this->validator->validate(new \stdClass());
+        $this->validator->validate(new \stdClass(), new Ccc());
     }
 
-    public function testValidCcc()
+    
+    /**
+     * @dataProvider getValidCccs
+     */    
+    public function testValidCcc($ccc)
     {
         $this->context->expects($this->never())
             ->method('addViolation');
-		$validCccs = array(
-			"2077-0441-64-1100376423",
-			"20770441641100376423",
-			"2077-0441-64-11003764 23 ",
-			"2077-0441-64-11003764-23");
-		
-		foreach($validCccs as $validCcc) {
-		
-			$this->validator->validate($validCcc);		
-		}
+
+        $this->validator->validate($ccc, new Ccc());
     }
 
-    // public function testInvalidCcc()
-    // {
-        // $constraint = new Enum(array(
-            // 'allowedValues' => array('foo', 'bar'),
-            // 'message'       => 'myMessage'
-        // ));
-        // $this->context->expects($this->once())
-            // ->method('addViolation')
-            // ->with('myMessage', $this->identicalTo(array(
-                // '{{ value }}'           => 'foobar',
-                // '{{ allowedValues }}'   => 'foo, bar'
-            // )), $this->identicalTo('foobar'), array('foo', 'bar'));
+    public function getValidCccs()
+    {
+        return array(
+            array('2077-0441-64-1100376423'),
+            array('20770441641100376423'),
+            array('2077-0441-64-11003764 23 '),
+            array('2077-0441-64-11003764-2-3'),
+        );
+    }    
+    
+    /**
+     * @dataProvider getInvalidCccs
+     */
+    public function testInvalidCcc($ccc)
+    {
+        $constraint = new Ccc(array(
+            'message' => 'myMessage'
+        ));
 
-        // $this->validator->validate('foobar', $constraint);
-    // }
+        $this->context->expects($this->once())
+                ->method('addViolation')
+                ->with('myMessage', array(
+                    '{{ value }}' => $ccc,
+        ));
+
+        $this->validator->validate($ccc, $constraint);
+    }
+
+    public function getInvalidCccs()
+    {
+        return array(
+            array('20757-0441-64-11003764231'),
+            array('2077044164s1100371423s'),
+            array('2077-0441-64-110053764 223 '),
+            array('2077-0441-64-11003764'),
+            array('11111111111111111111'),
+        );
+    }
+
 }
