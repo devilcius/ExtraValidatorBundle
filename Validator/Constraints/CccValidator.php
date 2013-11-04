@@ -42,8 +42,8 @@ class CccValidator extends ConstraintValidator
     private function validateCccNumber($value)
     {
 
-        //remove non numeric chars
-        $value = preg_replace("/[^0-9,.]/", "", $value);
+        //remove white spaces and hyphens
+        $value = preg_replace("/[\s\-]/", "", $value);        
         
         if (!preg_match(static::PATTERN, $value, $matches)) {
            
