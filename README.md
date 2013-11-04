@@ -1,6 +1,8 @@
 devilciusExtraValidatorBundle
 =================================
 
+[![Build Status](https://travis-ci.org/devilcius/ExtraValidatorBundle.png)](https://travis-ci.org/devilcius/ExtraValidatorBundle)
+
 This bundle provides validators for common spanish input forms.
 
 Current validators:
