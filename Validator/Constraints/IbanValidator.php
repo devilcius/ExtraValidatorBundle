@@ -44,7 +44,7 @@ class IbanValidator extends ConstraintValidator
 
     /**
      *
-     * @param string $value
+     * @param  string $value
      * @return bool
      */
     private function validateIbanNumber($iban)
@@ -54,15 +54,15 @@ class IbanValidator extends ConstraintValidator
 
         # Get country of IBAN
         $country = $this->ibanGetCountryPart($iban);
-     
+
         # Test length of IBAN
         if (strlen($iban) != $this->ibanCountryGetIbanLength($country)) {
             return false;
-        }         
-       
+        }
+
         # Get country-specific IBAN format regex
-        $regex = '/' . $this->ibanCountryGetIbanFormatRegex($country) . '/';          
-        
+        $regex = '/' . $this->ibanCountryGetIbanFormatRegex($country) . '/';
+
         # Check regex and checksum
         if (preg_match($regex, $iban)) {
             # Regex passed, check checksum
@@ -74,48 +74,72 @@ class IbanValidator extends ConstraintValidator
         }
 
         # Otherwise it 'could' exist
+
         return true;
     }
 
-    # Get the country part from an IBAN
-
+    /**
+     * Get the country part from an IBAN
+     *
+     * @param  type $iban
+     * @return type
+     */
     private function ibanGetCountryPart($iban)
     {
         $iban = $this->ibanToMachineFormat($iban);
+
         return substr($iban, 0, 2);
     }
 
-    # Get the IBAN length for an IBAN country
-
+    /**
+     * Get the IBAN length for an IBAN country
+     *
+     * @param  type $iban_country
+     * @return type
+     */
     private function ibanCountryGetIbanLength($iban_country)
     {
         return $this->ibanCountryGetInfo($iban_country, 'iban_length');
     }
 
-    # Get the IBAN format (as a regular expression) for an IBAN country
-
+    /**
+     * Get the IBAN format (as a regular expression) for an IBAN country
+     *
+     * @param  string $ibanCountry
+     * @return type
+     */
     private function ibanCountryGetIbanFormatRegex($ibanCountry)
     {
         return $this->ibanCountryGetInfo($ibanCountry, 'iban_format_regex');
     }
 
-    # Get information from the IBAN registry by country / code combination
-
+    /**
+     * Get information from the IBAN registry by country / code combination
+     *
+     * @param  string  $country
+     * @param  string  $code
+     * @return boolean
+     */
     private function ibanCountryGetInfo($country, $code)
     {
-       
+
         $country = strtoupper($country);
         $code = strtolower($code);
         if (array_key_exists($country, $this->ibanRegistry)) {
-            if (array_key_exists($code, $this->ibanRegistry[$country])) {                
-                return $this->ibanRegistry[$country][$code];               
+            if (array_key_exists($code, $this->ibanRegistry[$country])) {
+                return $this->ibanRegistry[$country][$code];
             }
         }
+
         return false;
     }
 
-# Check the checksum of an IBAN - code modified from Validate_Finance PEAR class
-
+    /**
+     * Check the checksum of an IBAN - code modified from Validate_Finance PEAR class
+     *
+     * @param  string  $iban
+     * @return boolean
+     */
     private function ibanVerifyChecksum($iban)
     {
         # convert to machine format
@@ -130,18 +154,23 @@ class IbanValidator extends ConstraintValidator
         if ($result != 1) {
             return false;
         }
+
         return true;
     }
 
-# Perform MOD97-10 checksum calculation ('Germanic-level effiency' version - thanks Chris!)
-
+    /**
+     * Perform MOD97-10 checksum calculation
+     *
+     * @param  type $numericRepresentation
+     * @return type
+     */
     private function ibanMod9710($numericRepresentation)
     {
         # prefer php5 gmp extension if available
         if (!($this->disableIbanGmpExtension) && function_exists('gmp_intval')) {
             return gmp_intval(gmp_mod(gmp_init($numericRepresentation, 10), '97')) === 1;
         }
-        
+
         # new manual processing (~3x slower)
         $length = strlen($numericRepresentation);
         $rest = "";
@@ -152,25 +181,34 @@ class IbanValidator extends ConstraintValidator
             $rest = $n % 97;
             $position = $position + $value;
         }
+
         return ($rest === 1);
     }
 
-# Character substitution required for IBAN MOD97-10 checksum validation/generation
-#  $s  Input string (IBAN)
-
-    function ibanChecksumStringReplace($string)
+    /**
+     * Character substitution required for IBAN MOD97-10 checksum validation/generation
+     *
+     * @param  string $iban
+     * @return string
+     */
+    public function ibanChecksumStringReplace($iban)
     {
         $ibanReplaceChars = range('A', 'Z');
         foreach (range(10, 35) as $tempvalue) {
             $ibanReplaceValues[] = strval($tempvalue);
         }
-        return str_replace($ibanReplaceChars, $ibanReplaceValues, $string);
+
+        return str_replace($ibanReplaceChars, $ibanReplaceValues, $iban);
     }
 
-# Convert an IBAN to machine format.  To do this, we
-# remove IBAN from the start, if present, and remove
-# non basic roman letter / digit characters
-
+    /**
+     * Convert an IBAN to machine format.  To do this, we
+     * remove IBAN from the start, if present, and remove
+     * non basic roman letter / digit characters
+     *
+     * @param  string $iban
+     * @return string
+     */
     private function ibanToMachineFormat($iban)
     {
         # Uppercase and trim spaces from left
@@ -183,11 +221,14 @@ class IbanValidator extends ConstraintValidator
         return $iban;
     }
 
+    /**
+     *  Loads registry from file
+     */
     private function ibanLoadRegistry()
     {
         # if the registry is not yet loaded, or has been corrupted, reload
         if (!is_array($this->ibanRegistry) || count($this->ibanRegistry) < 1) {
-            $data = file_get_contents(dirname(__FILE__) . '/iban-country-regex.txt');
+            $data = file_get_contents(dirname(__FILE__) . '/iban-country-registry.txt');
             $lines = explode("\n", $data);
             array_shift($lines); # drop leading description line
             # loop through lines
